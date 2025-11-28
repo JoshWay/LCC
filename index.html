@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Liquidation Command Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #08090c;
+      --bg-main: #0d0f14;
+      --bg-card: #12151c;
+      --bg-elevated: #181c26;
+      --bg-hover: #1e232f;
+
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-medium: rgba(255, 255, 255, 0.1);
+      --border-accent: rgba(212, 175, 55, 0.3);
+
+      --gold: #d4af37;
+      --gold-bright: #f4d03f;
+      --gold-soft: rgba(212, 175, 55, 0.15);
+      --gold-glow: rgba(212, 175, 55, 0.4);
+
+      --emerald: #10b981;
+      --emerald-soft: rgba(16, 185, 129, 0.15);
+
+      --azure: #3b82f6;
+      --azure-soft: rgba(59, 130, 246, 0.15);
+
+      --rose: #f43f5e;
+      --rose-soft: rgba(244, 63, 94, 0.15);
+
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'Outfit', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.5);
+      --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-pattern {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.05), transparent),
+        var(--bg-deep);
+    }
+
+    .bg-pattern::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+    }
+
+    /* App container */
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--bg-deep);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .title-group h1 {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text-primary), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .title-group .tagline {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 0.25rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-medium);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-accent);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+      border-color: var(--gold);
+      color: var(--bg-deep);
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      box-shadow: var(--shadow-gold);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      border-color: var(--rose);
+      color: var(--rose);
+    }
+
+    .btn-danger:hover {
+      background: var(--rose-soft);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Summary cards */
+    .summary-section {
+      margin-bottom: 2rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .scenario-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .scenario-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--card-accent);
+    }
+
+    .scenario-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-medium);
+    }
+
+    .scenario-card.max {
+      --card-accent: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    .scenario-card.mid {
+      --card-accent: linear-gradient(90deg, #3b82f6, #60a5fa);
+    }
+    .scenario-card.quick {
+      --card-accent: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .card-badge {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-value {
+      font-family: var(--font-display);
+      font-size: 2.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-value .currency {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      margin-right: 0.1rem;
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .card-chart {
+      margin-top: 1rem;
+      height: 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: var(--bg-elevated);
+      border-radius: 2px 2px 0 0;
+      transition: height 0.3s ease;
+    }
+
+    .chart-bar.active {
+      background: linear-gradient(180deg, var(--gold), var(--gold-soft));
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stat-icon.gold {
+      background: var(--gold-soft);
+      color: var(--gold);
+    }
+    .stat-icon.emerald {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+    }
+    .stat-icon.azure {
+      background: var(--azure-soft);
+      color: var(--azure);
+    }
+
+    .stat-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Controls bar */
+    .controls-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.7rem 1rem 0.7rem 2.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 0.5rem 0.9rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .chip:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border-medium);
+    }
+
+    .chip.active {
+      background: var(--gold-soft);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .chip .count {
+      display: inline-block;
+      margin-left: 0.4rem;
+      padding: 0.1rem 0.4rem;
+      background: var(--bg-elevated);
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+    }
+
+    .chip.active .count {
+      background: var(--gold);
+      color: var(--bg-deep);
+    }
+
+    /* Table wrapper */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead {
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    th {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.2s;
+      user-select: none;
+    }
+
+    th:hover {
+      color: var(--text-secondary);
+    }
+
+    th.sorted {
+      color: var(--gold);
+    }
+
+    th .sort-icon {
+      display: inline-block;
+      margin-left: 0.3rem;
+      opacity: 0.5;
+    }
+
+    th.sorted .sort-icon {
+      opacity: 1;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      transition: background 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    tbody tr.disabled {
+      opacity: 0.4;
+    }
+
+    tbody tr.dragging {
+      opacity: 0.5;
+      background: var(--gold-soft);
+    }
+
+    .checkbox-cell {
+      width: 50px;
+      text-align: center;
+    }
+
+    .custom-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin: 0 auto;
+    }
+
+    .custom-checkbox:hover {
+      border-color: var(--gold);
+    }
+
+    .custom-checkbox.checked {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .custom-checkbox svg {
+      width: 12px;
+      height: 12px;
+      color: var(--bg-deep);
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.15s ease;
+    }
+
+    .custom-checkbox.checked svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3rem 0.65rem;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .category-badge.cpu { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .category-badge.gpu { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .category-badge.motherboard { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .category-badge.memory { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .category-badge.storage { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+    .category-badge.psu { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .category-badge.case { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
+    .category-badge.cooling { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+    .category-badge.monitor { background: rgba(212, 175, 55, 0.15); color: #d4af37; }
+    .category-badge.bundle { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+    .category-badge.other { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+
+    .name-cell {
+      min-width: 200px;
+    }
+
+    .name-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .name-input:focus {
+      outline: none;
+      border-bottom-color: var(--gold);
+    }
+
+    .price-cell {
+      width: 110px;
+    }
+
+    .price-input-wrapper {
+      position: relative;
+    }
+
+    .price-input-wrapper::before {
+      content: '$';
+      position: absolute;
+      left: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .price-input {
+      width: 100%;
+      padding: 0.4rem 0.5rem 0.4rem 1.3rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-align: right;
+      transition: all 0.2s ease;
+    }
+
+    .price-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px var(--gold-soft);
+    }
+
+    .notes-cell {
+      min-width: 150px;
+    }
+
+    .notes-input {
+      width: 100%;
+      min-height: 32px;
+      padding: 0.35rem 0.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      resize: vertical;
+      transition: all 0.2s ease;
+    }
+
+    .notes-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      color: var(--text-primary);
+    }
+
+    .actions-cell {
+      width: 50px;
+      text-align: center;
+    }
+
+    .delete-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .delete-btn:hover {
+      background: var(--rose-soft);
+      color: var(--rose);
+    }
+
+    .delete-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .drag-handle {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      color: var(--text-muted);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .drag-handle:hover {
+      opacity: 1;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    /* Table footer */
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .footer-stats {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-stats span {
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Add item panel */
+    .add-panel {
+      margin-top: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .panel-header:hover {
+      background: var(--bg-hover);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .panel-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gold);
+    }
+
+    .panel-toggle {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: transform 0.3s ease;
+    }
+
+    .panel-toggle.open {
+      transform: rotate(180deg);
+    }
+
+    .panel-content {
+      padding: 1.25rem;
+      display: none;
+    }
+
+    .panel-content.open {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .form-field input,
+    .form-field select {
+      padding: 0.65rem 0.85rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-soft);
+    }
+
+    .form-field select {
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      background: var(--gold-soft);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+    }
+
+    .empty-icon svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+      color: var(--text-muted);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      padding: 0.875rem 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: toastIn 0.3s ease;
+    }
+
+    .toast.success {
+      border-color: var(--emerald);
+    }
+
+    .toast svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .toast.success svg {
+      color: var(--emerald);
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.open .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app {
+        padding: 1rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .title-group h1 {
+        font-size: 1.75rem;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-bar {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-chips {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+      }
+
+      .chip {
+        flex-shrink: 0;
+      }
+
+      th:nth-child(5),
+      td:nth-child(5),
+      th:nth-child(6),
+      td:nth-child(6) {
+        display: none;
+      }
+
+      .table-footer {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .toast-container {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-elevated);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-medium);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo">L</div>
+        <div class="title-group">
+          <h1>Liquidation Command Center</h1>
+          <p class="tagline">Strategic asset disposition for discerning sellers</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="import-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import
+        </button>
+        <button class="btn" id="export-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export
+        </button>
+      </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <section class="summary-section">
+      <div class="summary-grid">
+        <div class="scenario-card max">
+          <div class="card-header">
+            <span class="card-label">Maximum Value</span>
+            <span class="card-badge">Patient Sale</span>
+          </div>
+          <div class="card-value"><span class="currency">$</span><span id="total-max">0</span></div>
+          <p class="card-subtitle">Target price with optimal timing and effort</p>
+          <div class="card-chart" id="chart-max"></div>
+        </div>
+
+        <div class="scenario-card mid">
+          <div class="card-header">
+            <span class="card-label">Balanced</span>
+            <span class="card-badge">Reasonable</span>
+          </div>
+          <div class="card-value"><span class="currency">$</span><span id="total-mid">0</span></div>
+          <p class="card-subtitle">Fair market value with moderate negotiation</p>
+          <div class="card-chart" id="chart-mid"></div>
+        </div>
+
+        <div class="scenario-card quick">
+          <div class="card-header">
+            <span class="card-label">Quick Sale</span>
+            <span class="card-badge">Fast Exit</span>
+          </div>
+          <div class="card-value"><span class="currency">$</span><span id="total-quick">0</span></div>
+          <p class="card-subtitle">Floor price for immediate liquidation</p>
+          <div class="card-chart" id="chart-quick"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-icon gold">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Total Items</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon emerald">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="stat-included">0</span>
+          <span class="stat-label">Included</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon azure">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="stat-categories">0</span>
+          <span class="stat-label">Categories</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon gold">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="stat-spread">$0</span>
+          <span class="stat-label">Max–Quick Spread</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="search-input" placeholder="Search items...">
+      </div>
+      <div class="filter-chips" id="filter-chips">
+        <div class="chip active" data-filter="all">All<span class="count" id="count-all">0</span></div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-cell">
+                <div class="custom-checkbox" id="select-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </div>
+              </th>
+              <th style="width:40px"></th>
+              <th data-sort="category">Category <span class="sort-icon">↕</span></th>
+              <th data-sort="name">Item <span class="sort-icon">↕</span></th>
+              <th data-sort="max">Max <span class="sort-icon">↕</span></th>
+              <th data-sort="mid">Mid <span class="sort-icon">↕</span></th>
+              <th data-sort="quick">Quick <span class="sort-icon">↕</span></th>
+              <th>Notes</th>
+              <th style="width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="items-body"></tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div class="footer-stats">
+          <span id="footer-count">0 items</span>
+          <span>·</span>
+          <span id="footer-included">0 included</span>
+        </div>
+        <div class="footer-actions">
+          <button class="btn" id="select-all-btn">Select All</button>
+          <button class="btn" id="clear-all-btn">Clear All</button>
+          <button class="btn btn-danger" id="reset-btn">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Item Panel -->
+    <div class="add-panel">
+      <div class="panel-header" id="add-panel-toggle">
+        <div class="panel-title">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Add New Item
+        </div>
+        <div class="panel-toggle" id="panel-toggle-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+      <div class="panel-content" id="add-panel-content">
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="add-category">Category</label>
+            <select id="add-category">
+              <option value="CPU">CPU</option>
+              <option value="GPU">GPU</option>
+              <option value="Motherboard">Motherboard</option>
+              <option value="Memory">Memory</option>
+              <option value="Storage">Storage</option>
+              <option value="PSU">PSU</option>
+              <option value="Case">Case</option>
+              <option value="Cooling">Cooling</option>
+              <option value="Monitor">Monitor</option>
+              <option value="Bundle">Bundle</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-field" style="grid-column: span 2;">
+            <label for="add-name">Item Name</label>
+            <input type="text" id="add-name" placeholder="e.g., NVIDIA RTX 4090 Founders Edition">
+          </div>
+          <div class="form-field">
+            <label for="add-max">Max Price ($)</label>
+            <input type="number" id="add-max" min="0" step="10" placeholder="1200">
+          </div>
+          <div class="form-field">
+            <label for="add-mid">Mid Price ($)</label>
+            <input type="number" id="add-mid" min="0" step="10" placeholder="1000">
+          </div>
+          <div class="form-field">
+            <label for="add-quick">Quick Price ($)</label>
+            <input type="number" id="add-quick" min="0" step="10" placeholder="850">
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="add-notes">Notes</label>
+            <input type="text" id="add-notes" placeholder="Condition, accessories, special features...">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn" id="clear-form-btn">Clear</button>
+          <button class="btn btn-primary" id="add-item-btn">Add Item</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Export Data</h2>
+        <button class="modal-close" id="close-export-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Choose your export format:</p>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn" id="export-json" style="flex:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z"/></svg>
+            JSON
+          </button>
+          <button class="btn" id="export-csv" style="flex:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div class="modal-overlay" id="import-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Import Data</h2>
+        <button class="modal-close" id="close-import-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Import a JSON file to restore your data:</p>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+        <button class="btn btn-primary" id="choose-file-btn" style="width: 100%;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          Choose File
+        </button>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem; text-align: center;">
+          Warning: This will replace all current data
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // STATE & STORAGE
+    // ============================================
+    const STORAGE_KEY = 'liquidation_commander_v2';
+    const defaultItems = [
+      { id: 'cpu-12900k', category: 'CPU', name: 'Intel Core i9-12900K', max: 270, mid: 250, quick: 230, notes: '16c/24t, great single thread. Add Cinebench screenshot.', enabled: true },
+      { id: 'mb-z690-kp', category: 'Motherboard', name: 'EVGA Z690 Dark K|NGP|N', max: 500, mid: 475, quick: 425, notes: 'Rare Kingpin board, original box if available.', enabled: true },
+      { id: 'gpu-3090ti', category: 'GPU', name: 'EVGA RTX 3090 Ti FTW3 Ultra 24 GB', max: 1100, mid: 1000, quick: 950, notes: 'Like new, ideal for 4K and local AI workloads.', enabled: true },
+      { id: 'ram-ddr5-7800', category: 'Memory', name: 'Corsair Dominator Titanium DDR5 7800 48 GB (LE #008/500)', max: 800, mid: 700, quick: 600, notes: 'Limited edition, high-speed. Highlight serial number.', enabled: true },
+      { id: 'ram-ddr4-64', category: 'Memory', name: 'Corsair Dominator DDR4 64 GB (4x16)', max: 180, mid: 150, quick: 130, notes: 'Update with exact speed/timings.', enabled: true },
+      { id: 'ram-ddr4-32', category: 'Memory', name: 'Corsair Dominator DDR4 32 GB (4x8)', max: 110, mid: 90, quick: 75, notes: 'Update with exact speed/timings.', enabled: true },
+      { id: 'nvme-990pro-1tb', category: 'Storage', name: 'Samsung 990 Pro 1 TB NVMe', max: 90, mid: 80, quick: 70, notes: 'Include SMART/TBW screenshot.', enabled: true },
+      { id: 'nvme-980pro-pair', category: 'Storage', name: '2x Samsung 980 Pro 2 TB (4 TB pair)', max: 280, mid: 250, quick: 220, notes: 'Matched pair pulled from RAID 0.', enabled: true },
+      { id: 'hdd-8tb', category: 'Storage', name: 'Seagate Barracuda 8 TB HDD', max: 100, mid: 90, quick: 80, notes: 'Add CrystalDiskInfo health screenshot.', enabled: true },
+      { id: 'psu-evga-1000t2', category: 'PSU', name: 'EVGA Supernova 1000 T2 80+ Titanium', max: 150, mid: 135, quick: 120, notes: 'Fully modular, include cable set photo.', enabled: true },
+      { id: 'case-sm8', category: 'Case', name: 'CaseLabs Merlin SM8 full tower', max: 1100, mid: 950, quick: 800, notes: 'Rare case. Photograph interior, exterior, panels.', enabled: true },
+      { id: 'loop-bundle', category: 'Cooling', name: 'Full custom loop bundle (Aqua Computer, EK, HeatKiller, fittings)', max: 900, mid: 800, quick: 700, notes: 'List all parts in description, show full layout photo.', enabled: true },
+      { id: 'mon-aw3821dw', category: 'Monitor', name: 'Alienware AW3821DW 38" ultrawide', max: 850, mid: 750, quick: 650, notes: 'Original box, no dead pixels. Target local buyers.', enabled: true },
+      { id: 'mon-lg40', category: 'Monitor', name: 'LG 40" 5K2K Thunderbolt 4 ultrawide (40WP95C-W)', max: 1050, mid: 900, quick: 800, notes: 'TB4, 96 W PD. Highlight as creator display.', enabled: true }
+    ];
+
+    let items = [];
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let sortColumn = null;
+    let sortDirection = 'asc';
+    let draggedItem = null;
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    function loadItems() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          items = JSON.parse(stored);
+          return;
+        } catch (e) {
+          console.error('Failed to parse stored items', e);
+        }
+      }
+      items = defaultItems.map(i => ({ ...i }));
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function formatCurrency(value) {
+      return Number(value || 0).toLocaleString('en-US');
+    }
+
+    function generateId() {
+      return 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${message}
+      `;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ============================================
+    // CALCULATIONS
+    // ============================================
+    function getFilteredItems() {
+      return items.filter(item => {
+        const matchesFilter = activeFilter === 'all' || item.category.toLowerCase() === activeFilter.toLowerCase();
+        const matchesSearch = searchQuery === '' ||
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesFilter && matchesSearch;
+      });
+    }
+
+    function getSortedItems(filtered) {
+      if (!sortColumn) return filtered;
+      return [...filtered].sort((a, b) => {
+        let aVal = a[sortColumn];
+        let bVal = b[sortColumn];
+        if (typeof aVal === 'string') {
+          aVal = aVal.toLowerCase();
+          bVal = bVal.toLowerCase();
+        }
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function calculateTotals() {
+      let max = 0, mid = 0, quick = 0, enabledCount = 0;
+      items.forEach(item => {
+        if (!item.enabled) return;
+        enabledCount++;
+        max += Number(item.max) || 0;
+        mid += Number(item.mid) || 0;
+        quick += Number(item.quick) || 0;
+      });
+      return { max, mid, quick, enabledCount };
+    }
+
+    function getCategoryCounts() {
+      const counts = { all: items.length };
+      items.forEach(item => {
+        const cat = item.category.toLowerCase();
+        counts[cat] = (counts[cat] || 0) + 1;
+      });
+      return counts;
+    }
+
+    // ============================================
+    // RENDERING
+    // ============================================
+    function renderTotals() {
+      const totals = calculateTotals();
+      document.getElementById('total-max').textContent = formatCurrency(totals.max);
+      document.getElementById('total-mid').textContent = formatCurrency(totals.mid);
+      document.getElementById('total-quick').textContent = formatCurrency(totals.quick);
+
+      // Stats
+      document.getElementById('stat-total').textContent = items.length;
+      document.getElementById('stat-included').textContent = totals.enabledCount;
+      document.getElementById('stat-categories').textContent = new Set(items.map(i => i.category)).size;
+      document.getElementById('stat-spread').textContent = '$' + formatCurrency(totals.max - totals.quick);
+
+      // Footer
+      document.getElementById('footer-count').textContent = `${items.length} items`;
+      document.getElementById('footer-included').textContent = `${totals.enabledCount} included`;
+
+      // Mini charts
+      renderMiniChart('chart-max', items, 'max');
+      renderMiniChart('chart-mid', items, 'mid');
+      renderMiniChart('chart-quick', items, 'quick');
+    }
+
+    function renderMiniChart(containerId, data, field) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      const enabledItems = data.filter(i => i.enabled);
+      const maxVal = Math.max(...enabledItems.map(i => i[field] || 0), 1);
+
+      enabledItems.slice(0, 12).forEach((item, idx) => {
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar active';
+        const height = ((item[field] || 0) / maxVal) * 100;
+        bar.style.height = `${Math.max(height, 5)}%`;
+        bar.title = `${item.name}: $${formatCurrency(item[field])}`;
+        container.appendChild(bar);
+      });
+
+      // Fill remaining slots
+      for (let i = enabledItems.length; i < 12; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.style.height = '10%';
+        container.appendChild(bar);
+      }
+    }
+
+    function renderFilterChips() {
+      const container = document.getElementById('filter-chips');
+      const counts = getCategoryCounts();
+      container.innerHTML = '';
+
+      // All chip
+      const allChip = document.createElement('div');
+      allChip.className = `chip ${activeFilter === 'all' ? 'active' : ''}`;
+      allChip.dataset.filter = 'all';
+      allChip.innerHTML = `All<span class="count">${counts.all}</span>`;
+      allChip.addEventListener('click', () => setFilter('all'));
+      container.appendChild(allChip);
+
+      // Category chips
+      const categories = [...new Set(items.map(i => i.category))].sort();
+      categories.forEach(cat => {
+        const chip = document.createElement('div');
+        chip.className = `chip ${activeFilter.toLowerCase() === cat.toLowerCase() ? 'active' : ''}`;
+        chip.dataset.filter = cat.toLowerCase();
+        chip.innerHTML = `${cat}<span class="count">${counts[cat.toLowerCase()] || 0}</span>`;
+        chip.addEventListener('click', () => setFilter(cat.toLowerCase()));
+        container.appendChild(chip);
+      });
+    }
+
+    function renderItems() {
+      const tbody = document.getElementById('items-body');
+      const filtered = getFilteredItems();
+      const sorted = getSortedItems(filtered);
+
+      if (sorted.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                  </svg>
+                </div>
+                <h3 class="empty-title">No items found</h3>
+                <p class="empty-text">Try adjusting your search or filters, or add a new item below.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = sorted.map((item, idx) => `
+        <tr class="${item.enabled ? '' : 'disabled'}" data-id="${item.id}" draggable="true">
+          <td class="checkbox-cell">
+            <div class="custom-checkbox ${item.enabled ? 'checked' : ''}" data-action="toggle" data-id="${item.id}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </td>
+          <td>
+            <div class="drag-handle">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
+              </svg>
+            </div>
+          </td>
+          <td><span class="category-badge ${item.category.toLowerCase()}">${item.category}</span></td>
+          <td class="name-cell">
+            <input type="text" class="name-input" value="${escapeHtml(item.name)}" data-field="name" data-id="${item.id}">
+          </td>
+          <td class="price-cell">
+            <div class="price-input-wrapper">
+              <input type="number" class="price-input" value="${item.max}" min="0" step="10" data-field="max" data-id="${item.id}">
+            </div>
+          </td>
+          <td class="price-cell">
+            <div class="price-input-wrapper">
+              <input type="number" class="price-input" value="${item.mid}" min="0" step="10" data-field="mid" data-id="${item.id}">
+            </div>
+          </td>
+          <td class="price-cell">
+            <div class="price-input-wrapper">
+              <input type="number" class="price-input" value="${item.quick}" min="0" step="10" data-field="quick" data-id="${item.id}">
+            </div>
+          </td>
+          <td class="notes-cell">
+            <textarea class="notes-input" rows="1" data-field="notes" data-id="${item.id}">${escapeHtml(item.notes || '')}</textarea>
+          </td>
+          <td class="actions-cell">
+            <button class="delete-btn" data-action="delete" data-id="${item.id}" title="Delete item">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Update select all state
+      const allEnabled = items.every(i => i.enabled);
+      const selectAll = document.getElementById('select-all');
+      selectAll.classList.toggle('checked', allEnabled);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function render() {
+      renderTotals();
+      renderFilterChips();
+      renderItems();
+    }
+
+    // ============================================
+    // EVENT HANDLERS
+    // ============================================
+    function setFilter(filter) {
+      activeFilter = filter;
+      render();
+    }
+
+    function handleTableClick(e) {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+
+      if (action === 'toggle') {
+        const item = items.find(i => i.id === id);
+        if (item) {
+          item.enabled = !item.enabled;
+          saveItems();
+          render();
+        }
+      } else if (action === 'delete') {
+        if (confirm('Delete this item?')) {
+          items = items.filter(i => i.id !== id);
+          saveItems();
+          render();
+          showToast('Item deleted');
+        }
+      }
+    }
+
+    function handleInputChange(e) {
+      const target = e.target;
+      const field = target.dataset.field;
+      const id = target.dataset.id;
+
+      if (!field || !id) return;
+
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      if (field === 'max' || field === 'mid' || field === 'quick') {
+        item[field] = Number(target.value) || 0;
+      } else {
+        item[field] = target.value;
+      }
+
+      saveItems();
+      renderTotals();
+    }
+
+    function handleSort(e) {
+      const th = e.target.closest('th[data-sort]');
+      if (!th) return;
+
+      const column = th.dataset.sort;
+
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+
+      // Update UI
+      document.querySelectorAll('th[data-sort]').forEach(h => {
+        h.classList.remove('sorted');
+        h.querySelector('.sort-icon').textContent = '↕';
+      });
+      th.classList.add('sorted');
+      th.querySelector('.sort-icon').textContent = sortDirection === 'asc' ? '↑' : '↓';
+
+      renderItems();
+    }
+
+    function handleSearch(e) {
+      searchQuery = e.target.value;
+      renderItems();
+    }
+
+    // Drag and drop
+    function handleDragStart(e) {
+      const row = e.target.closest('tr[data-id]');
+      if (!row) return;
+      draggedItem = row.dataset.id;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      const row = e.target.closest('tr[data-id]');
+      if (row && row.dataset.id !== draggedItem) {
+        const rect = row.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        row.style.borderTop = e.clientY < midY ? '2px solid var(--gold)' : '';
+        row.style.borderBottom = e.clientY >= midY ? '2px solid var(--gold)' : '';
+      }
+    }
+
+    function handleDragLeave(e) {
+      const row = e.target.closest('tr[data-id]');
+      if (row) {
+        row.style.borderTop = '';
+        row.style.borderBottom = '';
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetRow = e.target.closest('tr[data-id]');
+      if (!targetRow || targetRow.dataset.id === draggedItem) return;
+
+      const draggedIdx = items.findIndex(i => i.id === draggedItem);
+      const targetIdx = items.findIndex(i => i.id === targetRow.dataset.id);
+
+      if (draggedIdx === -1 || targetIdx === -1) return;
+
+      const [item] = items.splice(draggedIdx, 1);
+
+      const rect = targetRow.getBoundingClientRect();
+      const insertAfter = e.clientY >= rect.top + rect.height / 2;
+      const newIdx = insertAfter ? targetIdx : targetIdx;
+
+      items.splice(newIdx, 0, item);
+
+      saveItems();
+      render();
+      showToast('Item reordered');
+    }
+
+    function handleDragEnd(e) {
+      document.querySelectorAll('tr[data-id]').forEach(row => {
+        row.classList.remove('dragging');
+        row.style.borderTop = '';
+        row.style.borderBottom = '';
+      });
+      draggedItem = null;
+    }
+
+    // ============================================
+    // PANEL & MODAL HANDLERS
+    // ============================================
+    function toggleAddPanel() {
+      const content = document.getElementById('add-panel-content');
+      const icon = document.getElementById('panel-toggle-icon');
+      content.classList.toggle('open');
+      icon.classList.toggle('open');
+    }
+
+    function addItem() {
+      const category = document.getElementById('add-category').value;
+      const name = document.getElementById('add-name').value.trim();
+      const max = Number(document.getElementById('add-max').value) || 0;
+      const mid = Number(document.getElementById('add-mid').value) || 0;
+      const quick = Number(document.getElementById('add-quick').value) || 0;
+      const notes = document.getElementById('add-notes').value.trim();
+
+      if (!name) {
+        showToast('Please enter an item name', 'error');
+        return;
+      }
+
+      items.push({
+        id: generateId(),
+        category,
+        name,
+        max,
+        mid,
+        quick,
+        notes,
+        enabled: true
+      });
+
+      saveItems();
+      render();
+      clearAddForm();
+      showToast('Item added successfully');
+    }
+
+    function clearAddForm() {
+      document.getElementById('add-name').value = '';
+      document.getElementById('add-max').value = '';
+      document.getElementById('add-mid').value = '';
+      document.getElementById('add-quick').value = '';
+      document.getElementById('add-notes').value = '';
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // ============================================
+    // EXPORT / IMPORT
+    // ============================================
+    function exportJSON() {
+      const data = JSON.stringify(items, null, 2);
+      downloadFile(data, 'liquidation-data.json', 'application/json');
+      closeModal('export-modal');
+      showToast('Exported as JSON');
+    }
+
+    function exportCSV() {
+      const headers = ['Category', 'Name', 'Max', 'Mid', 'Quick', 'Notes', 'Enabled'];
+      const rows = items.map(i => [
+        i.category,
+        `"${i.name.replace(/"/g, '""')}"`,
+        i.max,
+        i.mid,
+        i.quick,
+        `"${(i.notes || '').replace(/"/g, '""')}"`,
+        i.enabled
+      ]);
+
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      downloadFile(csv, 'liquidation-data.csv', 'text/csv');
+      closeModal('export-modal');
+      showToast('Exported as CSV');
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function handleImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if (Array.isArray(imported)) {
+            items = imported;
+            saveItems();
+            render();
+            closeModal('import-modal');
+            showToast('Data imported successfully');
+          } else {
+            throw new Error('Invalid format');
+          }
+        } catch (err) {
+          showToast('Failed to import file', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    function init() {
+      loadItems();
+      render();
+
+      // Table events
+      const tbody = document.getElementById('items-body');
+      tbody.addEventListener('click', handleTableClick);
+      tbody.addEventListener('input', handleInputChange);
+      tbody.addEventListener('dragstart', handleDragStart);
+      tbody.addEventListener('dragover', handleDragOver);
+      tbody.addEventListener('dragleave', handleDragLeave);
+      tbody.addEventListener('drop', handleDrop);
+      tbody.addEventListener('dragend', handleDragEnd);
+
+      // Header sort
+      document.querySelector('thead').addEventListener('click', handleSort);
+
+      // Search
+      document.getElementById('search-input').addEventListener('input', handleSearch);
+
+      // Select all
+      document.getElementById('select-all').addEventListener('click', () => {
+        const allEnabled = items.every(i => i.enabled);
+        items.forEach(i => i.enabled = !allEnabled);
+        saveItems();
+        render();
+      });
+
+      // Footer buttons
+      document.getElementById('select-all-btn').addEventListener('click', () => {
+        items.forEach(i => i.enabled = true);
+        saveItems();
+        render();
+      });
+
+      document.getElementById('clear-all-btn').addEventListener('click', () => {
+        items.forEach(i => i.enabled = false);
+        saveItems();
+        render();
+      });
+
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        if (confirm('Reset all items to defaults? This will erase all your changes.')) {
+          items = defaultItems.map(i => ({ ...i }));
+          saveItems();
+          render();
+          showToast('Reset to defaults');
+        }
+      });
+
+      // Add panel
+      document.getElementById('add-panel-toggle').addEventListener('click', toggleAddPanel);
+      document.getElementById('add-item-btn').addEventListener('click', addItem);
+      document.getElementById('clear-form-btn').addEventListener('click', clearAddForm);
+
+      // Export modal
+      document.getElementById('export-btn').addEventListener('click', () => openModal('export-modal'));
+      document.getElementById('close-export-modal').addEventListener('click', () => closeModal('export-modal'));
+      document.getElementById('export-json').addEventListener('click', exportJSON);
+      document.getElementById('export-csv').addEventListener('click', exportCSV);
+
+      // Import modal
+      document.getElementById('import-btn').addEventListener('click', () => openModal('import-modal'));
+      document.getElementById('close-import-modal').addEventListener('click', () => closeModal('import-modal'));
+      document.getElementById('choose-file-btn').addEventListener('click', () => {
+        document.getElementById('import-file').click();
+      });
+      document.getElementById('import-file').addEventListener('change', handleImport);
+
+      // Close modals on overlay click
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            overlay.classList.remove('open');
+          }
+        });
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
