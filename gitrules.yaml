@@ -1,3 +1,110 @@
+# Git Rules and Workflow Policy
+# Spec-Driven, Issues-Based Development Workflow
+
+# =============================================================================
+# ISSUES-BASED WORKFLOW (Primary Development Process)
+# =============================================================================
+
+issues_workflow:
+  overview:
+    description: "Spec-driven development with GitHub Issues as the work tracking mechanism"
+    flow: "Spec → Issues → Branch → PR → Merge"
+    principle: "Every code change traces back to a spec and an issue"
+
+  spec_to_issue_flow:
+    step_1_shape_spec:
+      command: "/shape-spec"
+      output: "agent-os/specs/[spec-name]/requirements.md"
+      description: "Define and refine feature requirements through dialogue"
+
+    step_2_write_spec:
+      command: "/write-spec"
+      output: "agent-os/specs/[spec-name]/spec.md"
+      description: "Create detailed specification document"
+
+    step_3_create_tasks:
+      command: "/create-tasks"
+      output: "agent-os/specs/[spec-name]/tasks.md"
+      description: "Break spec into implementation tasks"
+
+    step_4_create_issues:
+      description: "Create GitHub Issues from tasks.md"
+      mapping: "One task group = One Issue (typically)"
+      issue_content:
+        title: "feat: [task group description]"
+        body: |
+          ## Spec Reference
+          See: `agent-os/specs/[spec-name]/spec.md`
+
+          ## Tasks
+          - [ ] Task 1
+          - [ ] Task 2
+
+          ## Acceptance Criteria
+          [From spec.md]
+      labels: ["spec-required", "ready-for-dev"]
+
+    step_5_implement:
+      command: "/implement-tasks"
+      creates_branch: "feature/[issue-number]-[short-description]"
+      pr_closes_issue: true
+
+  issue_lifecycle:
+    states:
+      open:
+        description: "Issue created, not yet started"
+        labels: ["ready-for-dev"]
+      in_progress:
+        description: "Branch created, work underway"
+        labels: ["in-progress"]
+        trigger: "Branch created or assigned"
+      in_review:
+        description: "PR opened, awaiting review"
+        labels: ["in-review"]
+        trigger: "PR opened"
+      done:
+        description: "PR merged, issue auto-closed"
+        trigger: "PR merge with 'Closes #X'"
+
+  issue_labels:
+    priority:
+      - "priority: critical"
+      - "priority: high"
+      - "priority: medium"
+      - "priority: low"
+    status:
+      - "ready-for-dev"
+      - "in-progress"
+      - "in-review"
+      - "blocked"
+    type:
+      - "feature"
+      - "bug"
+      - "docs"
+      - "refactor"
+    workflow:
+      - "spec-required"
+      - "needs-spec"
+      - "has-spec"
+
+  issue_templates:
+    feature:
+      title_format: "feat: [description]"
+      required_sections:
+        - "Spec Reference (link to spec.md)"
+        - "Tasks (checklist)"
+        - "Acceptance Criteria"
+    bug:
+      title_format: "fix: [description]"
+      required_sections:
+        - "Current Behavior"
+        - "Expected Behavior"
+        - "Steps to Reproduce"
+
+# =============================================================================
+# BRANCH MODEL (Updated for Issues-Based Workflow)
+# =============================================================================
+
 git_rules_and_pull_request_policy:
   branch_model:
     main:
@@ -5,16 +112,26 @@ git_rules_and_pull_request_policy:
       access: "No direct commits"
       merge_source: "dev branch only"
       requirements: "Tests must pass"
+
     dev:
       purpose: "Integration branch"
       access: "No direct commits"
       merge_source: "All features merge here first via PR"
+
     feature:
-      naming: "feature/<name>"
-      scope: "One feature/task per branch"
+      naming: "feature/[issue-number]-[short-description]"
+      examples:
+        - "feature/42-user-authentication"
+        - "feature/57-dashboard-charts"
+        - "feature/103-api-rate-limiting"
+      scope: "One issue per branch"
       source: "Create from dev"
+      requirement: "Must reference a GitHub Issue"
+
     hotfix:
-      naming: "hotfix/<name>"
+      naming: "hotfix/[issue-number]-[short-description]"
+      examples:
+        - "hotfix/99-fix-login-crash"
       purpose: "Emergency fixes"
       merge_targets:
         - "main"
@@ -23,21 +140,31 @@ git_rules_and_pull_request_policy:
 
   mandatory_pull_requests:
     rules:
-      - "All work from feature/* MUST be merged via a Pull Request into dev"
+      - "All work from feature/* MUST be merged via Pull Request into dev"
       - "Never merge feature/* directly into main"
       - "main only receives merges from dev"
       - "Do not push commits directly to main or dev"
+      - "Every PR must reference an Issue"
 
   pr_requirements:
     ci_checks: "Must pass before merging"
     reviewer_approval:
       minimum: 1
       high_risk_changes: 2
-    title_format: "Conventional Commits (e.g., 'feat: add assumption validator UI')"
-    scope: "Keep PRs focused; one logical change per PR"
-    documentation: "Link related issues and include brief testing notes"
+    title_format: "type(#issue): description (e.g., 'feat(#42): add user authentication')"
+    body_requirements:
+      - "Closes #[issue-number]"
+      - "Link to spec if applicable"
+      - "Brief testing notes"
+    scope: "Keep PRs focused; one issue per PR"
+    auto_close: "Use 'Closes #X' to auto-close issues on merge"
 
   commit_message_format:
+    format: "type(#issue): description"
+    examples:
+      - "feat(#42): add login form validation"
+      - "fix(#99): resolve null pointer in user service"
+      - "docs(#15): update API documentation"
     types:
       feat: "new feature"
       fix: "bug fix"
@@ -49,11 +176,12 @@ git_rules_and_pull_request_policy:
 
   local_workflow:
     steps:
+      - "Ensure Issue exists (create from spec if needed)"
       - "git checkout dev && git pull"
-      - "git checkout -b feature/<name>"
-      - "Work and commit with Conventional Commits"
-      - "git push -u origin feature/<name>"
-      - "Open PR: feature/<name> -> dev (use GitHub UI or gh pr create)"
+      - "git checkout -b feature/[issue-number]-[short-name]"
+      - "Work and commit with 'type(#issue): description'"
+      - "git push -u origin feature/[issue-number]-[short-name]"
+      - "Open PR with 'Closes #[issue-number]' in body"
 
   pre_push_protection:
     mandatory: true
@@ -74,11 +202,15 @@ git_rules_and_pull_request_policy:
         exit 1
       fi
 
-      # Validate branch naming convention
-      if ! echo "$BRANCH" | grep -E "^(feature|hotfix)/" > /dev/null && [ "$BRANCH" != "main" ] && [ "$BRANCH" != "dev" ]; then
-        echo "Warning: Branch name should follow convention: feature/<name> or hotfix/<name>" >&2
+      # Validate branch naming convention (must include issue number)
+      if echo "$BRANCH" | grep -E "^(feature|hotfix)/" > /dev/null; then
+        if ! echo "$BRANCH" | grep -E "^(feature|hotfix)/[0-9]+-" > /dev/null; then
+          echo "Warning: Branch should include issue number: feature/123-description" >&2
+          echo "Current branch: $BRANCH" >&2
+        fi
+      elif [ "$BRANCH" != "main" ] && [ "$BRANCH" != "dev" ]; then
+        echo "Warning: Branch name should follow convention: feature/[issue]-[name]" >&2
         echo "Current branch: $BRANCH" >&2
-        echo "Consider renaming with: git branch -m feature/<name>" >&2
       fi
 
       exit 0
@@ -90,17 +222,27 @@ git_rules_and_pull_request_policy:
       - "chmod +x .githooks/pre-push"
       - "git config core.hooksPath .githooks"
 
-  worktrees:
-    usage:
-      - "Use separate worktrees for dev and current feature branches"
-      - "After merge, delete feature branch and remove its worktree"
-
   enforcement:
     protection: "Branch protection on main and dev in GitHub"
     requirements: "PRs required for merges"
     prevention: "Direct pushes blocked server-side"
 
+# =============================================================================
+# LLM ASSISTANT RULES (Updated for Issues-Based Workflow)
+# =============================================================================
+
 git_workflow_rules_for_llm_assistants:
+  primary_workflow:
+    description: "Spec-driven, issues-based development"
+    steps:
+      - "Shape spec with user (/shape-spec)"
+      - "Write detailed spec (/write-spec)"
+      - "Create tasks from spec (/create-tasks)"
+      - "Help user create GitHub Issues from tasks"
+      - "Create feature branch: feature/[issue]-[name]"
+      - "Implement with /implement-tasks"
+      - "Open PR with 'Closes #[issue]'"
+
   branch_structure:
     main:
       purpose: "Stable, deployable code only"
@@ -116,58 +258,101 @@ git_workflow_rules_for_llm_assistants:
       truth_source: "dev is truth before main since main is prod"
 
     feature:
-      naming: "feature/<name>"
+      naming: "feature/[issue-number]-[short-description]"
       examples:
-        - "feature/authentication"
-        - "feature/user-dashboard"
-      lifecycle: "Create → Develop → Test → Merge to dev → Delete"
-      llm_rule: "One branch per logical feature or task"
+        - "feature/42-authentication"
+        - "feature/57-user-dashboard"
+      lifecycle: "Issue Created → Branch → Develop → PR → Merge → Issue Closed"
+      llm_rule: "Always reference issue number in branch name"
+
+  issue_management:
+    before_coding:
+      - "Verify an Issue exists for the work"
+      - "If no Issue, help create one from the spec"
+      - "Reference the spec in the Issue body"
+
+    creating_issues_from_specs:
+      process: |
+        After /create-tasks generates tasks.md:
+        1. Review task groups in tasks.md
+        2. Each task group becomes a GitHub Issue
+        3. Issue title: "feat: [task group name]"
+        4. Issue body includes:
+           - Link to spec.md
+           - Task checklist from tasks.md
+           - Acceptance criteria from spec
+        5. Apply appropriate labels
+
+    issue_body_template: |
+      ## Spec Reference
+      `agent-os/specs/[spec-name]/spec.md`
+
+      ## Tasks
+      - [ ] Task 1 from tasks.md
+      - [ ] Task 2 from tasks.md
+
+      ## Acceptance Criteria
+      - Criteria from spec.md
+
+      ## Labels
+      - `feature`, `has-spec`, `ready-for-dev`
 
   workflow_commands:
     creating_new_features: |
-      # Always start from dev
+      # 1. Ensure Issue exists (create if needed)
+      # 2. Start from dev
       git checkout dev
       git pull origin dev
-      git checkout -b feature/feature-name
+      # 3. Create branch with issue number
+      git checkout -b feature/42-feature-name
 
     working_on_features: |
-      # Regular development cycle
+      # Reference issue in commits
       git add .
-      git commit -m "feat: descriptive commit message"
-      git push origin feature/feature-name
+      git commit -m "feat(#42): descriptive commit message"
+      git push origin feature/42-feature-name
+
+    opening_pull_request: |
+      # PR title format
+      feat(#42): add feature description
+
+      # PR body must include
+      Closes #42
+
+      ## Summary
+      - What was done
+
+      ## Test Plan
+      - How to verify
 
     merging_features: |
-      # Merge to dev first
-      git checkout dev
-      git merge feature/feature-name
-      git push origin dev
+      # Merge to dev via PR (not direct merge)
+      # PR merge auto-closes the linked issue
 
-      # Clean up
-      git branch -d feature/feature-name
-      git push origin --delete feature/feature-name
-
-    promoting_to_production: |
-      # Only after dev is tested and stable
-      git checkout main
-      git merge dev
-      git push origin main
+      # After merge, clean up
+      git branch -d feature/42-feature-name
+      git push origin --delete feature/42-feature-name
 
   llm_assistant_rules:
-    when_to_suggest_branch_changes:
-      new_feature: "Create feature/<name> branch"
-      bug_fix: "Create hotfix/<name> branch (merges to both dev and main)"
-      integration_testing: "Use dev branch"
-      production_release: "Use main branch"
+    always_do:
+      - "Check for existing Issue before starting work"
+      - "Include issue number in branch names"
+      - "Include 'Closes #X' in PR descriptions"
+      - "Reference specs when creating Issues"
+      - "Update tasks.md checkboxes as work completes"
 
-    what_not_to_suggest:
+    never_do:
+      - "Create branches without corresponding Issues"
       - "Direct commits to main branch"
-      - "Pushing untested code to dev"
-      - "Working directly on dev for features"
-      - "Deleting branches with unmerged work"
+      - "Push untested code to dev"
+      - "Work directly on dev for features"
+      - "Delete branches with unmerged work"
+      - "Merge PRs without issue references"
 
     commit_message_format:
-      format: "type: short description"
+      format: "type(#issue): short description"
       notes:
+        - "Always include issue number"
         - "DO NOT ADD SIGNATURES OR UNRELATED NOTES"
       types:
         feat: "new feature"
@@ -178,108 +363,107 @@ git_workflow_rules_for_llm_assistants:
         test: "adding tests"
         chore: "maintenance"
 
-  worktree_management:
-    standard_structure:
-      main_directory: "fraqtiv-helix-mvp/"
-      dev_directory: "fraqtiv-helix-mvp-dev/"
-      feature_directory: "fraqtiv-helix-mvp-feature/"
-      descriptions:
-        main: "main branch (stable)"
-        dev: "dev branch (integration)"
-        feature: "current feature work"
-
-    llm_worktree_commands:
-      create_dev_worktree: "git worktree add ../fraqtiv-helix-mvp-dev dev"
-      create_feature_worktree: "git worktree add ../fraqtiv-helix-mvp-feature feature/current-work"
-      list_worktrees: "git worktree list"
-      remove_worktree: "git worktree remove ../fraqtiv-helix-mvp-feature"
-
   safety_checks:
     pre_operation_verification:
-      - "Current branch is appropriate for the task"
+      - "Issue exists for the work being done"
+      - "Current branch includes issue number"
       - "Working directory is clean (git status)"
       - "Latest changes are pulled (git pull)"
-      - "Target branch exists and is up to date"
+      - "Spec is up to date if applicable"
       - "No merge conflict markers in any files"
-
-  merge_conflict_resolution:
-    detection:
-      markers: ["<<<<<<<", "=======", ">>>>>>>"]
-      common_files: [".agent-os/product/roadmap.md", ".agent-os/product/tech-stack.md", "scripts/migrate-*.ts"]
-    prevention:
-      pre_push_hook: "Blocks pushes with conflict markers"
-      automated_detection: "Scans staged files for markers"
-    resolution_guidance:
-      strategy: "Take more complete/advanced implementation"
-      documentation_files: "Prefer usage-tracking-refactor branch for roadmap.md and tech-stack.md"
-      code_files: "Preserve necessary imports and error handling from HEAD"
-      testing_files: "Use cleaner mock implementations from feature branches"
-    tools:
-      conflict_detection: "grep -r '<<<<<<\\|======\\|>>>>>>>' src/ scripts/ .agent-os/"
-      clean_resolution: "Use IDE merge conflict resolution tools"
-      validation: "git diff --check to ensure no trailing whitespace"
 
   common_scenarios:
     starting_new_feature_work:
       steps:
-        - "Ensure in dev worktree: cd ../fraqtiv-helix-mvp-dev"
-        - "Pull latest: git pull origin dev"
-        - "Create feature branch: git checkout -b feature/new-feature"
-        - "Create feature worktree: git worktree add ../fraqtiv-helix-mvp-feature feature/new-feature"
+        - "Verify spec exists in agent-os/specs/"
+        - "Check for existing Issue or create one"
+        - "git checkout dev && git pull origin dev"
+        - "git checkout -b feature/[issue-number]-[name]"
+        - "Begin implementation with /implement-tasks"
 
     code_review_ready:
       steps:
-        - "Push feature branch: git push origin feature/branch-name"
-        - "Suggest creating PR to dev branch"
-        - "Do not merge automatically"
+        - "Push feature branch"
+        - "Open PR to dev branch"
+        - "Include 'Closes #[issue]' in PR body"
+        - "Request review"
 
     emergency_hotfix:
       steps:
-        - "Create from main: git checkout main && git checkout -b hotfix/urgent-fix"
+        - "Create Issue for the bug"
+        - "git checkout main && git checkout -b hotfix/[issue]-[fix-name]"
         - "Fix and test"
-        - "Merge to both main and dev"
-        - "Tag the release"
-
-  integration_notes:
-    agent_os_claude:
-      - "These configuration files should exist in main branch"
-      - "Feature branches inherit them automatically"
-      - "Worktrees share the same .git directory, so configurations persist"
-      - "Always commit config changes to appropriate branch first"
-
-  release_management:
-    semantic_versioning:
-      format: "MAJOR.MINOR.PATCH (e.g., 3.0.0)"
-      increment_rules:
-        major: "Breaking changes or major feature additions"
-        minor: "New features without breaking changes"
-        patch: "Bug fixes and minor improvements"
-      automation:
-        tagging: "Automated on successful dev->main merge"
-        changelog: "Generated from conventional commit messages"
-        validation: "Tags must follow semantic versioning format"
-
-    tagging_strategy:
-      main_branch_tags:
-        format: "v{version} (e.g., v3.0.0)"
-        conditions: "Only after successful merge from dev with passing tests"
-      pre_release_tags:
-        format: "v{version}-{prerelease} (e.g., v3.0.0-alpha.1)"
-        usage: "For dev branch releases to staging"
-      conflict_free_requirement: "No merge conflicts in release commits"
-
-    release_process:
-      steps:
-        - "Ensure all conflicts resolved in dev branch"
-        - "Run full test suite on dev"
-        - "Merge dev to main via PR with passing CI"
-        - "Create semantic version tag on main"
-        - "Push tag to trigger deployment"
+        - "PR to main with 'Closes #[issue]'"
+        - "Also merge to dev"
 
   questions_before_git_operations:
-    - "What branch should this work be done on?"
-    - "Have you pulled the latest changes?"
-    - "Is this ready for integration testing?"
-    - "Should this go to main or dev first?"
-    - "Do you want me to create a new worktree?"
-    - "Are there any merge conflicts that need resolution?"
+    - "Is there a GitHub Issue for this work?"
+    - "Does the branch name include the issue number?"
+    - "Have you pulled the latest changes from dev?"
+    - "Is the spec up to date?"
+    - "Will the PR include 'Closes #X'?"
+
+# =============================================================================
+# AGENT OS INTEGRATION
+# =============================================================================
+
+agent_os_integration:
+  spec_to_issue_workflow:
+    description: "How Agent OS specs connect to GitHub Issues"
+
+    recommended_process:
+      - "Use /shape-spec to define requirements"
+      - "Use /write-spec to create detailed specification"
+      - "Use /create-tasks to generate task breakdown"
+      - "Create GitHub Issues from task groups"
+      - "Use /implement-tasks to execute work"
+      - "PR references Issue, merges auto-closes"
+
+  tasks_to_issues_mapping:
+    description: "Converting tasks.md entries to GitHub Issues"
+    strategy: "One task group = One Issue"
+    example:
+      tasks_md: |
+        ## Task Group 1: User Authentication
+        - [ ] Create login form component
+        - [ ] Add form validation
+        - [ ] Implement auth API call
+
+        ## Task Group 2: Session Management
+        - [ ] Add session storage
+        - [ ] Implement logout
+      becomes:
+        - "Issue #42: feat: User Authentication"
+        - "Issue #43: feat: Session Management"
+
+  future_automation:
+    description: "Potential automation for creating Issues from tasks"
+    ideas:
+      - "Script to parse tasks.md and create Issues via gh CLI"
+      - "Claude Code command to suggest Issue creation"
+      - "GitHub Action to sync tasks.md with Issues"
+
+# =============================================================================
+# RELEASE MANAGEMENT
+# =============================================================================
+
+release_management:
+  semantic_versioning:
+    format: "MAJOR.MINOR.PATCH (e.g., 3.0.0)"
+    increment_rules:
+      major: "Breaking changes or major feature additions"
+      minor: "New features without breaking changes"
+      patch: "Bug fixes and minor improvements"
+
+  tagging_strategy:
+    main_branch_tags:
+      format: "v{version} (e.g., v3.0.0)"
+      conditions: "Only after successful merge from dev with passing tests"
+
+  release_process:
+    steps:
+      - "Ensure all Issues for release are closed"
+      - "All specs verified in agent-os/specs/*/verification/"
+      - "Run full test suite on dev"
+      - "Merge dev to main via PR"
+      - "Create semantic version tag on main"
